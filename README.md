@@ -57,6 +57,20 @@ powershell -ExecutionPolicy Bypass -File .\scripts\run.ps1 -Preview
 
 本项目可以公开发布代码，但不要把 `data/x-session.xsession`、`data/browser-profile/`、`data/*.db`、`.env` 或报告中的私人内容上传到公开仓库。会话包即使加密，也应放在私有存储中，通过安全方式复制到云电脑。
 
+## 从 GitHub 部署到云电脑
+
+公开代码仓库地址：`https://github.com/rickcen01/x-ai-digest`
+
+在云电脑执行：
+
+```powershell
+git clone https://github.com/rickcen01/x-ai-digest.git
+cd x-ai-digest
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+```
+
+再通过私密文件传输把本机的 `data/x-session.xsession` 放到云电脑的同一路径，运行导入和预览命令。会话包不在公开仓库中。
+
 ## 运行
 
 预览测试，不发送、不记录已读：

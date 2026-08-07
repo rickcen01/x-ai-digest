@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "x-ai-digest"
+version = "0.1.0"
+description = "Headless personalized X AI news digest"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "cryptography>=45,<47",
+  "httpx>=0.28,<1",
+  "playwright>=1.54,<2",
+  "python-dotenv>=1.0,<2",
+  "twscrape[curl]==0.20.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9"]
+
+[project.scripts]
+x-ai-digest = "x_ai_digest.app:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

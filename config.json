@@ -1,0 +1,69 @@
+{
+  "account_db": "data/accounts.db",
+  "proxy": "http://127.0.0.1:7890",
+  "source": "browser",
+  "browser": {
+    "profile_dir": "data/browser-profile",
+    "executable_path": "",
+    "headless": true,
+    "timeout_seconds": 60,
+    "login_timeout_minutes": 15
+  },
+  "home": {
+    "operation_id": "psvmu2kIj08INJBBiZVgMw/HomeTimeline",
+    "count": 20,
+    "language": "zh-cn",
+    "timeout_seconds": 45,
+    "auto_discover_operation": true
+  },
+  "digest": {
+    "title": "X 每日 AI 情报",
+    "max_items": 10,
+    "lookback_hours": 96,
+    "minimum_keyword_score": 2.0,
+    "keywords": [
+      "artificial intelligence",
+      "machine learning",
+      "generative ai",
+      "openai",
+      "chatgpt",
+      "anthropic",
+      "claude",
+      "gemini",
+      "grok",
+      "deepseek",
+      "qwen",
+      "llama",
+      "mistral",
+      "kimi",
+      "minimax",
+      "agentic",
+      "ai agent",
+      "multimodal",
+      "reasoning model",
+      "large language model",
+      "llm",
+      "agi",
+      "人工智能",
+      "生成式ai",
+      "大模型",
+      "多模态",
+      "智能体",
+      "模型发布",
+      "开源模型"
+    ]
+  },
+  "llm": {
+    "enabled": false,
+    "base_url": "https://api.openai.com/v1",
+    "model": "",
+    "api_key_env": "AI_DIGEST_LLM_API_KEY",
+    "timeout_seconds": 90
+  },
+  "delivery": {
+    "channels": ["local"],
+    "feishu_webhook_env": "AI_DIGEST_FEISHU_WEBHOOK",
+    "telegram_bot_token_env": "AI_DIGEST_TELEGRAM_BOT_TOKEN",
+    "telegram_chat_id_env": "AI_DIGEST_TELEGRAM_CHAT_ID"
+  }
+}

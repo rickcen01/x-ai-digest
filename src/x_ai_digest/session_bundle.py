@@ -71,10 +71,12 @@ async def export_session(settings: Settings, output: Path) -> dict[str, Any]:
 
     async with async_playwright() as playwright:
         context = await playwright.chromium.launch_persistent_context(
-            # X can delay or suppress the authenticated shell in headless mode.
-            # Export is an interactive, user-triggered operation, so use a visible
-            # context for the one-time confirmation and keep scheduled runs headless.
-            **_launch_options(settings, headless=False)
+            # Terminal login is designed for SSH/mobile control. The authenticated
+            # shell check now waits for hydration, so export can stay headless too.
+            **_launch_options(
+                settings,
+                headless=bool(settings.browser.get("session_export_headless", True)),
+            )
         )
         try:
             page = context.pages[0] if context.pages else await context.new_page()

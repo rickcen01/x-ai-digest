@@ -6,6 +6,7 @@
     "profile_dir": "data/browser-profile",
     "executable_path": "",
     "headless": true,
+    "session_export_headless": true,
     "timeout_seconds": 60,
     "login_timeout_minutes": 15
   },

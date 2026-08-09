@@ -16,7 +16,7 @@ from twscrape.login import LoginConfig
 from twscrape.logger import set_log_level
 
 from .account_import import import_account_db
-from .browser_client import fetch_home_timeline_browser, login_browser
+from .browser_client import fetch_home_timeline_browser, login_browser, login_browser_terminal
 from .config import Settings, load_settings
 from .delivery import deliver
 from .digest import render_structured_digest, score_posts
@@ -187,6 +187,7 @@ def build_parser() -> argparse.ArgumentParser:
     refresh_parser = sub.add_parser("refresh-account", help="使用账号库资料刷新登录会话")
     refresh_parser.add_argument("--manual", action="store_true", help="在终端手动输入邮箱验证码")
     sub.add_parser("login-browser", help="打开独立浏览器并保存一次性登录会话")
+    sub.add_parser("login-terminal", help="通过终端输入账号和挑战信息完成无头登录")
 
     export_parser = sub.add_parser("export-session", help="导出密码加密的可迁移会话包")
     export_parser.add_argument("--output", required=True, help="输出 .xsession 文件")
@@ -213,6 +214,8 @@ def main() -> None:
             result = asyncio.run(_refresh_account(settings, manual=bool(args.manual)))
         elif args.command == "login-browser":
             result = asyncio.run(login_browser(settings))
+        elif args.command == "login-terminal":
+            result = asyncio.run(login_browser_terminal(settings))
         elif args.command == "export-session":
             result = asyncio.run(export_session(settings, Path(args.output)))
         elif args.command == "import-session":

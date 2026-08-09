@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import getpass
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -133,6 +135,115 @@ async def login_browser(settings: Settings) -> dict[str, Any]:
                     return {"ok": True, "profile_dir": str(profile_dir)}
                 await asyncio.sleep(2)
             raise BrowserSessionError("等待登录超时，请重新运行登录命令")
+        finally:
+            await context.close()
+
+
+async def _click_flow_button(page: Page, labels: tuple[str, ...]) -> bool:
+    selectors = (
+        '[data-testid="ocfEnterTextNextButton"]',
+        '[data-testid="LoginForm_Login_Button"]',
+        '[data-testid="ocfEnterTextButton"]',
+    )
+    for selector in selectors:
+        button = page.locator(selector)
+        if await button.count() > 0:
+            await button.first.click()
+            return True
+    for label in labels:
+        pattern = re.compile(label, re.IGNORECASE)
+        button = page.get_by_role("button", name=pattern)
+        if await button.count() > 0:
+            await button.first.click()
+            return True
+        button = page.locator('[role="button"]').filter(has_text=pattern)
+        if await button.count() > 0:
+            await button.first.click()
+            return True
+    return False
+
+
+async def login_browser_terminal(settings: Settings) -> dict[str, Any]:
+    """One-time terminal login for headless/phone-controlled cloud machines.
+
+    The account password is entered by the user through getpass and is not
+    written to project files. Only the resulting browser profile is retained.
+    """
+    profile_dir = Path(settings.browser["profile_dir"])
+    profile_dir.mkdir(parents=True, exist_ok=True)
+    username = input("X 用户名/邮箱/手机号（只在云电脑终端输入）: ").strip()
+    password = getpass.getpass("X 密码（不会写入文件）: ")
+    if not username or not password:
+        raise ValueError("用户名和密码不能为空")
+
+    timeout_seconds = max(60, int(settings.browser.get("login_timeout_minutes", 15)) * 60)
+    username_submitted = False
+    password_submitted = False
+    challenge_attempts = 0
+
+    async with async_playwright() as playwright:
+        context = await playwright.chromium.launch_persistent_context(
+            **_launch_options(settings, headless=True)
+        )
+        try:
+            page = context.pages[0] if context.pages else await context.new_page()
+            await page.goto("https://x.com/i/flow/login", wait_until="domcontentloaded", timeout=60000)
+            deadline = asyncio.get_running_loop().time() + timeout_seconds
+            while asyncio.get_running_loop().time() < deadline:
+                if await _logged_in(page):
+                    marker = settings.state_dir / "browser-auth.json"
+                    marker.parent.mkdir(parents=True, exist_ok=True)
+                    marker.write_text(
+                        json.dumps({"logged_in": True, "profile_dir": str(profile_dir)}, ensure_ascii=False),
+                        encoding="utf-8",
+                    )
+                    return {"ok": True, "profile_dir": str(profile_dir), "mode": "terminal"}
+
+                if not username_submitted:
+                    field = page.locator(
+                        'input[autocomplete="username"]:visible, input[name="text"]:visible'
+                    )
+                    if await field.count() > 0:
+                        await field.first.fill(username)
+                        username_submitted = True
+                        clicked = await _click_flow_button(page, (r"^Next$", r"^下一步$"))
+                        if not clicked:
+                            await field.first.press("Enter")
+                        await page.wait_for_timeout(1000)
+                        continue
+
+                password_field = page.locator('input[type="password"]:visible')
+                if not password_submitted and await password_field.count() > 0:
+                    await password_field.first.fill(password)
+                    password = ""
+                    password_submitted = True
+                    clicked = await _click_flow_button(page, (r"^Log in$", r"^登录$"))
+                    if not clicked:
+                        await password_field.first.press("Enter")
+                    await page.wait_for_timeout(1500)
+                    continue
+
+                challenge_field = page.locator(
+                    'input[autocomplete="one-time-code"]:visible, input[name="text"]:visible'
+                )
+                if password_submitted and await challenge_field.count() > 0:
+                    if challenge_attempts >= 3:
+                        raise BrowserSessionError("登录挑战次数过多，请改用远程桌面完成登录")
+                    challenge = getpass.getpass(
+                        "X 验证码或页面要求的额外信息（不会写入文件，直接回车取消）: "
+                    ).strip()
+                    if not challenge:
+                        raise BrowserSessionError("未输入登录挑战信息")
+                    await challenge_field.first.fill(challenge)
+                    challenge_attempts += 1
+                    clicked = await _click_flow_button(page, (r"^Next$", r"^下一步$", r"^Verify$", r"^验证$"))
+                    if not clicked:
+                        await challenge_field.first.press("Enter")
+                    await page.wait_for_timeout(1500)
+                    continue
+
+                await asyncio.sleep(1)
+            raise BrowserSessionError("无头登录超时，请检查代理或改用远程桌面登录")
         finally:
             await context.close()
 

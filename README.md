@@ -38,6 +38,14 @@ powershell -ExecutionPolicy Bypass -File .\scripts\login.ps1
 
 登录成功后窗口自动关闭，之后 `run.ps1` 始终以无界面模式使用 `data/browser-profile`。该档案与 Browser AI Studio 完全分离。
 
+如果云电脑没有可查看的桌面、只能通过手机终端控制，可使用无头终端登录：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\login-headless.ps1
+```
+
+账号、密码和验证码只在云电脑终端交互输入，密码不会写入项目文件；成功后仅保留浏览器会话档案。网页登录会话失效时，需要再次由用户完成一次授权，不会自动反复尝试密码。
+
 ## 跨云电脑迁移登录会话
 
 登录完成后，由你在本机终端运行：
